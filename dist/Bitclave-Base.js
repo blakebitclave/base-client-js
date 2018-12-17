@@ -8489,8 +8489,8 @@ var AsyncAction = (function (_super) {
     function AsyncAction(scheduler, work) {
         _super.call(this, scheduler, work);
         this.scheduler = scheduler;
-        this.work = work;
         this.pending = false;
+        this.work = work;
     }
     AsyncAction.prototype.schedule = function (state, delay) {
         if (delay === void 0) { delay = 0; }
@@ -12212,7 +12212,7 @@ function resolveSchema(root, ref) {
   var p = URI.parse(ref)
     , refPath = _getFullPath(p)
     , baseId = getFullPath(this._getId(root.schema));
-  if (refPath !== baseId) {
+  if (Object.keys(root.schema).length === 0 || refPath !== baseId) {
     var id = normalizeId(refPath);
     var refVal = this._refs[id];
     if (typeof refVal == 'string') {
@@ -13673,7 +13673,7 @@ var AjaxSubscriber = (function (_super) {
         }
         switch (contentType) {
             case 'application/x-www-form-urlencoded':
-                return Object.keys(body).map(function (key) { return (encodeURI(key) + "=" + encodeURI(body[key])); }).join('&');
+                return Object.keys(body).map(function (key) { return (encodeURIComponent(key) + "=" + encodeURIComponent(body[key])); }).join('&');
             case 'application/json':
                 return JSON.stringify(body);
             default:
@@ -23238,6 +23238,14 @@ module.exports = function generate_validate(it, $keyword, $ruleType) {
   var $errorKeyword;
   var $typeSchema = it.schema.type,
     $typeIsArray = Array.isArray($typeSchema);
+  if ($typeSchema && it.opts.nullable && it.schema.nullable === true) {
+    if ($typeIsArray) {
+      if ($typeSchema.indexOf('null') == -1) $typeSchema = $typeSchema.concat('null');
+    } else if ($typeSchema != 'null') {
+      $typeSchema = [$typeSchema, 'null'];
+      $typeIsArray = true;
+    }
+  }
   if ($typeIsArray && $typeSchema.length == 1) {
     $typeSchema = $typeSchema[0];
     $typeIsArray = false;
@@ -23785,7 +23793,7 @@ module.exports = function generate__limitItems(it, $keyword, $ruleType) {
       if ($keyword == 'maxItems') {
         out += 'more';
       } else {
-        out += 'less';
+        out += 'fewer';
       }
       out += ' than ';
       if ($isData) {
@@ -23956,7 +23964,7 @@ module.exports = function generate__limitProperties(it, $keyword, $ruleType) {
       if ($keyword == 'maxProperties') {
         out += 'more';
       } else {
-        out += 'less';
+        out += 'fewer';
       }
       out += ' than ';
       if ($isData) {
@@ -38238,8 +38246,9 @@ function Ajv(opts) {
   this._metaOpts = getMetaSchemaOptions(this);
 
   if (opts.formats) addInitialFormats(this);
-  addDraft6MetaSchema(this);
+  addDefaultMetaSchema(this);
   if (typeof opts.meta == 'object') this.addMetaSchema(opts.meta);
+  if (opts.nullable) this.addKeyword('nullable', {metaSchema: {const: true}});
   addInitialSchemas(this);
 }
 
@@ -38611,7 +38620,7 @@ function addFormat(name, format) {
 }
 
 
-function addDraft6MetaSchema(self) {
+function addDefaultMetaSchema(self) {
   var $dataSchema;
   if (self._opts.$data) {
     $dataSchema = __webpack_require__(577);
@@ -40684,7 +40693,7 @@ formats.full = {
   'uri-reference': URIREF,
   'uri-template': URITEMPLATE,
   url: URL,
-  email: /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&''*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i,
+  email: /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i,
   hostname: hostname,
   ipv4: /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
   ipv6: /^\s*(?:(?:(?:[0-9a-f]{1,4}:){7}(?:[0-9a-f]{1,4}|:))|(?:(?:[0-9a-f]{1,4}:){6}(?::[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){5}(?:(?:(?::[0-9a-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9a-f]{1,4}:){4}(?:(?:(?::[0-9a-f]{1,4}){1,3})|(?:(?::[0-9a-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){3}(?:(?:(?::[0-9a-f]{1,4}){1,4})|(?:(?::[0-9a-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){2}(?:(?:(?::[0-9a-f]{1,4}){1,5})|(?:(?::[0-9a-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9a-f]{1,4}:){1}(?:(?:(?::[0-9a-f]{1,4}){1,6})|(?:(?::[0-9a-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9a-f]{1,4}){1,7})|(?:(?::[0-9a-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(?:%.+)?\s*$/i,
@@ -42655,6 +42664,7 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
   var $closingBraces = '';
   $it.level++;
   var $nextValid = 'valid' + $it.level;
+  out += 'var ' + ($errs) + ' = errors;';
   if (it.util.schemaHasRules($schema, it.RULES.all)) {
     $it.schema = $schema;
     $it.schemaPath = $schemaPath;
@@ -42668,7 +42678,6 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
       $dataProperties = 'dataProperties' + $lvl,
       $ownProperties = it.opts.ownProperties,
       $currentBaseId = it.baseId;
-    out += ' var ' + ($errs) + ' = errors; ';
     if ($ownProperties) {
       out += ' var ' + ($dataProperties) + ' = undefined; ';
     }
@@ -50108,7 +50117,7 @@ module.exports = function(module) {
 /* 643 */
 /***/ (function(module, exports) {
 
-module.exports = {"_from":"elliptic@=6.4.0","_id":"elliptic@6.4.0","_inBundle":false,"_integrity":"sha1-ysmvh2LIWDYYcAPI3+GT5eLq5d8=","_location":"/elliptic","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"elliptic@=6.4.0","name":"elliptic","escapedName":"elliptic","rawSpec":"=6.4.0","saveSpec":null,"fetchSpec":"=6.4.0"},"_requiredBy":["/bitcore-lib","/browserify-sign","/create-ecdh","/secp256k1"],"_resolved":"https://registry.npmjs.org/elliptic/-/elliptic-6.4.0.tgz","_shasum":"cac9af8762c85836187003c8dfe193e5e2eae5df","_spec":"elliptic@=6.4.0","_where":"/Users/antonbatalin/Documents/Development/2018/base-client-js/node_modules/bitcore-lib","author":{"name":"Fedor Indutny","email":"fedor@indutny.com"},"bugs":{"url":"https://github.com/indutny/elliptic/issues"},"bundleDependencies":false,"dependencies":{"bn.js":"^4.4.0","brorand":"^1.0.1","hash.js":"^1.0.0","hmac-drbg":"^1.0.0","inherits":"^2.0.1","minimalistic-assert":"^1.0.0","minimalistic-crypto-utils":"^1.0.0"},"deprecated":false,"description":"EC cryptography","devDependencies":{"brfs":"^1.4.3","coveralls":"^2.11.3","grunt":"^0.4.5","grunt-browserify":"^5.0.0","grunt-cli":"^1.2.0","grunt-contrib-connect":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-uglify":"^1.0.1","grunt-mocha-istanbul":"^3.0.1","grunt-saucelabs":"^8.6.2","istanbul":"^0.4.2","jscs":"^2.9.0","jshint":"^2.6.0","mocha":"^2.1.0"},"files":["lib"],"homepage":"https://github.com/indutny/elliptic","keywords":["EC","Elliptic","curve","Cryptography"],"license":"MIT","main":"lib/elliptic.js","name":"elliptic","repository":{"type":"git","url":"git+ssh://git@github.com/indutny/elliptic.git"},"scripts":{"jscs":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","jshint":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","lint":"npm run jscs && npm run jshint","test":"npm run lint && npm run unit","unit":"istanbul test _mocha --reporter=spec test/index.js","version":"grunt dist && git add dist/"},"version":"6.4.0"}
+module.exports = {"_args":[["elliptic@6.4.0","/Users/antonbatalin/Documents/Development/2018/bitClave/base-client-js"]],"_from":"elliptic@6.4.0","_id":"elliptic@6.4.0","_inBundle":false,"_integrity":"sha1-ysmvh2LIWDYYcAPI3+GT5eLq5d8=","_location":"/elliptic","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"elliptic@6.4.0","name":"elliptic","escapedName":"elliptic","rawSpec":"6.4.0","saveSpec":null,"fetchSpec":"6.4.0"},"_requiredBy":["/bitcore-lib","/bitcore-mnemonic/bitcore-lib","/browserify-sign","/create-ecdh","/secp256k1"],"_resolved":"https://registry.npmjs.org/elliptic/-/elliptic-6.4.0.tgz","_spec":"6.4.0","_where":"/Users/antonbatalin/Documents/Development/2018/bitClave/base-client-js","author":{"name":"Fedor Indutny","email":"fedor@indutny.com"},"bugs":{"url":"https://github.com/indutny/elliptic/issues"},"dependencies":{"bn.js":"^4.4.0","brorand":"^1.0.1","hash.js":"^1.0.0","hmac-drbg":"^1.0.0","inherits":"^2.0.1","minimalistic-assert":"^1.0.0","minimalistic-crypto-utils":"^1.0.0"},"description":"EC cryptography","devDependencies":{"brfs":"^1.4.3","coveralls":"^2.11.3","grunt":"^0.4.5","grunt-browserify":"^5.0.0","grunt-cli":"^1.2.0","grunt-contrib-connect":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-uglify":"^1.0.1","grunt-mocha-istanbul":"^3.0.1","grunt-saucelabs":"^8.6.2","istanbul":"^0.4.2","jscs":"^2.9.0","jshint":"^2.6.0","mocha":"^2.1.0"},"files":["lib"],"homepage":"https://github.com/indutny/elliptic","keywords":["EC","Elliptic","curve","Cryptography"],"license":"MIT","main":"lib/elliptic.js","name":"elliptic","repository":{"type":"git","url":"git+ssh://git@github.com/indutny/elliptic.git"},"scripts":{"jscs":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","jshint":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","lint":"npm run jscs && npm run jshint","test":"npm run lint && npm run unit","unit":"istanbul test _mocha --reporter=spec test/index.js","version":"grunt dist && git add dist/"},"version":"6.4.0"}
 
 /***/ }),
 /* 644 */
@@ -55424,7 +55433,7 @@ ABI.rawEncode = function (types, values) {
     }
   })
 
-  for (var i in types) {
+  for (var i = 0; i < types.length; i++) {
     var type = elementaryName(types[i])
     var value = values[i]
     var cur = encodeSingle(type, value)
@@ -55446,7 +55455,7 @@ ABI.rawDecode = function (types, data) {
   var ret = []
   data = new Buffer(data)
   var offset = 0
-  for (var i in types) {
+  for (var i = 0; i < types.length; i++) {
     var type = elementaryName(types[i])
     var parsed = parseType(type, data, offset)
     var decoded = decodeSingle(parsed, data, offset)
